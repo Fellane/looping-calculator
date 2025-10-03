@@ -1,0 +1,50 @@
+--- a/index.html
++++ b/index.html
+@@ -6,6 +6,16 @@
+   <title>Калькулятор лупинг-стратегий</title>
+   <style>
+     :root{
+       --bg:#0b0d10; --card:#14171c; --muted:#8892a7; --text:#e8eef9; --accent:#89b4ff; --good:#7ce38b; --bad:#ff8a8a; --border:#202632;
+     }
+-    html,body{height:100%;}
+-    body{margin:0; font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans","Helvetica Neue",Arial; background:var(--bg); color:var(--text);} 
+-    .wrap{max-width:1100px; margin:24px auto; padding:0 16px;}
++    html,body{height:100%; max-width:100%; overflow-x:hidden;}
++    body{
++      margin:0;
++      font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans","Helvetica Neue",Arial;
++      background:var(--bg); color:var(--text);
++      -webkit-text-size-adjust:100%;
++      touch-action: pan-y; /* блокируем горизонтальные жесты */
++    }
++    *{box-sizing:border-box;}
++    img,svg,canvas,video{max-width:100%; height:auto;}
++    table{width:100%; display:block; overflow-x:auto;}
++    .wrap{max-width:1100px; margin:24px auto; padding:0 16px;}
+-    .grid{display:grid; grid-template-columns:1.1fr 1fr; gap:16px}
++    .grid{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:16px}
+     @media (max-width:980px){.grid{grid-template-columns:1fr}}
+     .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px}
+     .card h3{margin:0 0 10px; font-size:16px}
+-    .row{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+-    .row3{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
++    .row{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px}
++    .row3{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px}
+     .field{display:flex; flex-direction:column; gap:6px;}
+     .field label{font-size:12px; color:var(--muted)}
+     .field input{background:#0e1116; border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:12px; outline:none}
+@@ -58,13 +68,13 @@
+         <div class="kpi" style="margin-top:10px; grid-template-columns:repeat(2,1fr)">
+           <div class="item"><div class="t" data-i="hf">HF</div><div class="v" id="kHF">—</div></div>
+           <div class="item"><div class="t" data-i="ddToLiq">Просадка цены Collateral до ликвидации (в %)</div><div class="v" id="kDD">—</div></div>
+-        </div>
+-        </div>
++        </div> <!-- end KPI (HF/DD) -->
+         <div class="divider"></div>
+         <div class="row">
+           <div class="field"><span class="t muted" data-i="entryCost">Потеря за вход в позицию</span><div class="v" id="kEntry">—</div></div>
+           <div class="field"><span class="t muted" data-i="spread">Потеря за выход из позиции</span><div class="v" id="kSpread">—</div></div>
+         </div>
+       </section>
+     </div>
+   </div>
