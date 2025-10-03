@@ -184,5 +184,14 @@
   calc();
 })();
 </script>
+<script>
+  window.addEventListener("message", function(e) {
+    if (!e.data || e.data.type !== "lc-resize") return;
+    var frame = document.getElementById("lc-frame");
+    if (frame) {
+      frame.style.height = Math.max(600, e.data.height) + "px";
+    }
+  });
+</script>
 </body>
 </html>
