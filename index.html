@@ -3,29 +3,45 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Калькулятор лупинг‑стратегий</title>
+  <title>Калькулятор лупинг-стратегий</title>
   <style>
     :root{
       --bg:#0b0d10; --card:#14171c; --muted:#8892a7; --text:#e8eef9; --accent:#89b4ff; --good:#7ce38b; --bad:#ff8a8a; --border:#202632;
     }
-    html,body{height:100%;}
-    body{margin:0; font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans","Helvetica Neue",Arial; background:var(--bg); color:var(--text);} 
+    /* фиксируем горизонтальный оверфлоу и «ёрзание» */
+    html,body{height:100%; max-width:100%; overflow-x:hidden;}
+    body{
+      margin:0;
+      font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans","Helvetica Neue",Arial;
+      background:var(--bg); color:var(--text);
+      -webkit-text-size-adjust:100%;
+      touch-action: pan-y; /* разрешаем только вертикальный скролл жестом */
+    }
+    *{box-sizing:border-box;}
+    img,svg,canvas,video{max-width:100%; height:auto;}
+    table{width:100%; display:block; overflow-x:auto;}
+
     .wrap{max-width:1100px; margin:24px auto; padding:0 16px;}
     header{display:flex; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap}
     .logo{font-weight:700; font-size:18px; letter-spacing:0.2px}
-    .grid{display:grid; grid-template-columns:1.1fr 1fr; gap:16px}
+
+    /* minmax(0,…) не даёт контенту «раздвигать» грид и уводить страницу вправо */
+    .grid{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:16px}
     @media (max-width:980px){.grid{grid-template-columns:1fr}}
+
     .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px}
     .card h3{margin:0 0 10px; font-size:16px}
-    .row{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    .row3{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
+    .row{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px}
+    .row3{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px}
     .field{display:flex; flex-direction:column; gap:6px;}
     .field label{font-size:12px; color:var(--muted)}
     .field input{background:#0e1116; border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:12px; outline:none}
+
     .kpi{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
     .kpi .item{background:#0e1116; border:1px solid var(--border); border-radius:12px; padding:12px}
     .kpi .item .t{font-size:12px; color:var(--muted)}
     .kpi .item .v{font-size:20px; font-weight:700; margin-top:4px}
+
     .muted{color:var(--muted)}
     .hl{color:var(--accent)}
     .good{color:var(--good)}
@@ -61,7 +77,7 @@
         </div>
         <div class="row3">
           <div class="field"><label data-i="impact">Price impact при входе (% от позиции)</label><input id="impact" type="number" step="0.01" value="0.05"></div>
-          <div class="field"><label data-i="flashFee">Flash‑loan fee (% от позиции)</label><input id="flashFee" type="number" step="0.01" value="0"></div>
+          <div class="field"><label data-i="flashFee">Flash-loan fee (% от позиции)</label><input id="flashFee" type="number" step="0.01" value="0"></div>
         </div>
         <div class="divider"></div>
         <button id="calcBtn" data-i="recalc">Рассчитать</button>
@@ -82,8 +98,7 @@
         <div class="kpi" style="margin-top:10px; grid-template-columns:repeat(2,1fr)">
           <div class="item"><div class="t" data-i="hf">HF</div><div class="v" id="kHF">—</div></div>
           <div class="item"><div class="t" data-i="ddToLiq">Просадка цены Collateral до ликвидации (в %)</div><div class="v" id="kDD">—</div></div>
-        </div>
-        </div>
+        </div> <!-- end KPI (HF/DD) -->
         <div class="divider"></div>
         <div class="row">
           <div class="field"><span class="t muted" data-i="entryCost">Потеря за вход в позицию</span><div class="v" id="kEntry">—</div></div>
@@ -100,10 +115,10 @@
 
   const i18n = {
     ru: {
-      inputs:"Вводные параметры", equity:"Собственный капитал ($)", lev:"Плечо (×)", dep:"Ставка депозита (% годовых)", loan:"Ставка займа (% годовых)", impact:"Price impact при входе (% от позиции)", flashFee:"Flash‑loan fee (% от позиции)", maxLtv:"Макс. LTV (%)", liqThr:"Liquidation threshold (%)", recalc:"Рассчитать", summary:"Итоги позиции", pos:"Размер позиции", loanAmt:"Займ", ltv:"LTV", netApy:"Чистая доходность на equity", netYear:"Чистая прибыль в год", breakeven:"Выход в ноль", hf:"HF", ddToLiq:"Просадка цены Collateral до ликвидации (в %)", entryCost:"Потеря за вход в позицию", spread:"Потеря за выход из позиции"
+      inputs:"Вводные параметры", equity:"Собственный капитал ($)", lev:"Плечо (×)", dep:"Ставка депозита (% годовых)", loan:"Ставка займа (% годовых)", impact:"Price impact при входе (% от позиции)", flashFee:"Flash-loan fee (% от позиции)", maxLtv:"Макс. LTV (%)", liqThr:"Liquidation threshold (%)", recalc:"Рассчитать", summary:"Итоги позиции", pos:"Размер позиции", loanAmt:"Займ", ltv:"LTV", netApy:"Чистая доходность на equity", netYear:"Чистая прибыль в год", breakeven:"Выход в ноль", hf:"HF", ddToLiq:"Просадка цены Collateral до ликвидации (в %)", entryCost:"Потеря за вход в позицию", spread:"Потеря за выход из позиции"
     },
     en: {
-      inputs:"Inputs", equity:"Own capital ($)", lev:"Leverage (×)", dep:"Deposit APY (%)", loan:"Borrow APY (%)", impact:"Price impact on entry (% of position)", flashFee:"Flash‑loan fee (% of position)", maxLtv:"Max LTV (%)", liqThr:"Liquidation threshold (%)", recalc:"Calculate", summary:"Position summary", pos:"Position size", loanAmt:"Debt", ltv:"LTV", netApy:"Net return on equity", netYear:"Net income / year", breakeven:"Break even", hf:"HF", ddToLiq:"Collateral price drop to liquidation (%)", entryCost:"Entry loss", spread:"Exit loss"
+      inputs:"Inputs", equity:"Own capital ($)", lev:"Leverage (×)", dep:"Deposit APY (%)", loan:"Borrow APY (%)", impact:"Price impact on entry (% of position)", flashFee:"Flash-loan fee (% of position)", maxLtv:"Max LTV (%)", liqThr:"Liquidation threshold (%)", recalc:"Calculate", summary:"Position summary", pos:"Position size", loanAmt:"Debt", ltv:"LTV", netApy:"Net return on equity", netYear:"Net income / year", breakeven:"Break even", hf:"HF", ddToLiq:"Collateral price drop to liquidation (%)", entryCost:"Entry loss", spread:"Exit loss"
     }
   };
   let lang='ru';
@@ -124,7 +139,7 @@
 
     const entryPct = impact + flash;
     const entryCost = pos * entryPct;
-    const exitCost  = pos * impact; // flash‑fee не учитываем на выходе
+    const exitCost  = pos * impact; // flash-fee не учитываем на выходе
 
     // доходы/расходы (без реинвеста)
     const gross = pos * dep;
@@ -183,15 +198,6 @@
   setLang('ru');
   calc();
 })();
-</script>
-<script>
-  window.addEventListener("message", function(e) {
-    if (!e.data || e.data.type !== "lc-resize") return;
-    var frame = document.getElementById("lc-frame");
-    if (frame) {
-      frame.style.height = Math.max(600, e.data.height) + "px";
-    }
-  });
 </script>
 </body>
 </html>
