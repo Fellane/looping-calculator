@@ -8,47 +8,58 @@
     :root{
       --bg:#0b0d10; --card:#14171c; --muted:#8892a7; --text:#e8eef9; --accent:#89b4ff; --good:#7ce38b; --bad:#ff8a8a; --border:#202632;
     }
-    /* фиксируем горизонтальный оверфлоу и «ёрзание» */
+    /* анти-ёрзание и базовая типографика */
     html,body{height:100%; max-width:100%; overflow-x:hidden;}
     body{
-      margin:0;
-      font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans","Helvetica Neue",Arial;
+      margin:0; 
+      font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans","Helvetica Neue",Arial; 
       background:var(--bg); color:var(--text);
       -webkit-text-size-adjust:100%;
-      touch-action: pan-y; /* разрешаем только вертикальный скролл жестом */
+      touch-action: pan-y; /* блокируем горизонтальные жесты */
     }
     *{box-sizing:border-box;}
     img,svg,canvas,video{max-width:100%; height:auto;}
     table{width:100%; display:block; overflow-x:auto;}
 
-    .wrap{max-width:1100px; margin:24px auto; padding:0 16px;}
+    .wrap{max-width:1100px; margin:36px auto 24px; padding:0 16px;}
     header{display:flex; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap}
     .logo{font-weight:700; font-size:18px; letter-spacing:0.2px}
 
-    /* minmax(0,…) не даёт контенту «раздвигать» грид и уводить страницу вправо */
     .grid{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:16px}
     @media (max-width:980px){.grid{grid-template-columns:1fr}}
 
     .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px}
     .card h3{margin:0 0 10px; font-size:16px}
-    .row{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px}
+    .row{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; align-items:start;}
     .row3{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px}
     .field{display:flex; flex-direction:column; gap:6px;}
     .field label{font-size:12px; color:var(--muted)}
-    .field input{background:#0e1116; border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:12px; outline:none}
+    .field input{
+      background:#0e1116; border:1px solid var(--border); color:var(--text);
+      padding:10px 12px; border-radius:12px; outline:none;
+      height:48px; line-height:1.2; /* одинаковая высота для всех инпутов */
+      width:100%; min-width:0;      /* не растягиваем колонки */
+    }
 
     .kpi{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
     .kpi .item{background:#0e1116; border:1px solid var(--border); border-radius:12px; padding:12px}
     .kpi .item .t{font-size:12px; color:var(--muted)}
     .kpi .item .v{font-size:20px; font-weight:700; margin-top:4px}
-
     .muted{color:var(--muted)}
     .hl{color:var(--accent)}
     .good{color:var(--good)}
     .bad{color:var(--bad)}
     .divider{height:1px; background:var(--border); margin:12px 0}
-    button{background:#0e1116; color:var(--text); border:1px solid var(--border); padding:8px 12px; border-radius:10px; cursor:pointer}
-    button:hover{border-color:#2e3746}
+
+    /* мобильная адаптация */
+    @media (max-width: 640px){
+      .wrap{max-width:100%; padding:0 12px; margin:24px auto}
+      .grid{grid-template-columns:1fr}
+      .card{padding:12px; border-radius:14px}
+      .row,.row3{grid-template-columns:1fr}
+      .kpi{grid-template-columns:1fr}
+      .kpi .item .v{font-size:18px}
+    }
   </style>
 </head>
 <body>
@@ -56,7 +67,7 @@
     <header>
       <div class="logo">Looping Calculator</div>
       <div class="lang">
-        <button id="langBtn" title="Switch language">RU 🇷🇺</button>
+        <button id="langBtn" title="Switch language" style="background:#0e1116;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer">RU 🇷🇺</button>
       </div>
     </header>
 
@@ -80,7 +91,7 @@
           <div class="field"><label data-i="flashFee">Flash-loan fee (% от позиции)</label><input id="flashFee" type="number" step="0.01" value="0"></div>
         </div>
         <div class="divider"></div>
-        <button id="calcBtn" data-i="recalc">Рассчитать</button>
+        <button id="calcBtn" data-i="recalc" style="background:#0e1116;color:var(--text);border:1px solid var(--border);padding:10px 14px;border-radius:12px;cursor:pointer">Рассчитать</button>
       </section>
 
       <section class="card">
@@ -141,7 +152,6 @@
     const entryCost = pos * entryPct;
     const exitCost  = pos * impact; // flash-fee не учитываем на выходе
 
-    // доходы/расходы (без реинвеста)
     const gross = pos * dep;
     const cost  = debt * loan;
     const net   = gross - cost;
@@ -150,11 +160,11 @@
     const ltv = pos>0 ? (debt/pos) : 0;
 
     const hf = (debt>0 && liqThr>0) ? (pos * liqThr) / debt : Infinity;
-    let dd = (pos>0 && liqThr>0) ? (1 - (debt/(pos*liqThr))) : 0; // доля падения цены до ликвидации
+    let dd = (pos>0 && liqThr>0) ? (1 - (debt/(pos*liqThr))) : 0;
     dd = Math.max(0, Math.min(1, dd));
 
     const dailyNet = net/365;
-    const totalCost = entryCost + exitCost; // считаем вход+выход
+    const totalCost = entryCost + exitCost;
     const daysToBE = dailyNet>0 ? Math.ceil(totalCost / dailyNet) : Infinity;
 
     return {pos,debt,ltv,net,roi,entryCost,exitCost,hf,dd,daysToBE};
@@ -183,13 +193,19 @@
     $("kDD").textContent    = fmt2(r.dd*100)+"%";
     $("kBE").textContent    = (r.daysToBE===Infinity? (lang==='ru'?"никогда":"never"): r.daysToBE+ (lang==='ru'?" дней":" days"));
 
-    // цветовые состояния
+    // подсветки
     const vRoi = $("kRoi"), vNet=$("kNet"), vHF=$("kHF"), vLTV=$("kLtv");
     [vRoi,vNet,vHF,vLTV].forEach(el=>{ el.classList.remove('good','bad'); });
     if (r.roi>0) vRoi.classList.add('good'); else if (r.roi<0) vRoi.classList.add('bad');
     if (r.net>0) vNet.classList.add('good'); else if (r.net<0) vNet.classList.add('bad');
     if (r.hf>=1.5 && r.hf!==Infinity) vHF.classList.add('good');
     if (r.ltv>liqThr && liqThr>0) vLTV.classList.add('bad');
+
+    // если включён режим автоподстройки высоты (для встраивания)
+    if (new URLSearchParams(location.search).get('autosize') === '1') {
+      const h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+      parent.postMessage({ type: 'lc-resize', height: h }, '*');
+    }
   }
 
   $("calcBtn").addEventListener('click', calc);
@@ -197,6 +213,14 @@
 
   setLang('ru');
   calc();
+
+  // при первой загрузке тоже сообщим высоту в autosize-режиме
+  if (new URLSearchParams(location.search).get('autosize') === '1') {
+    window.addEventListener('load', () => {
+      const h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+      parent.postMessage({ type: 'lc-resize', height: h }, '*');
+    });
+  }
 })();
 </script>
 </body>
