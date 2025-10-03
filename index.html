@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Калькулятор лупинг‑стратегий</title>
+  <style>
+    :root{
+      --bg:#0b0d10; --card:#14171c; --muted:#8892a7; --text:#e8eef9; --accent:#89b4ff; --good:#7ce38b; --bad:#ff8a8a; --border:#202632;
+    }
+    html,body{height:100%;}
+    body{margin:0; font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans","Helvetica Neue",Arial; background:var(--bg); color:var(--text);} 
+    .wrap{max-width:1100px; margin:24px auto; padding:0 16px;}
+    header{display:flex; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap}
+    .logo{font-weight:700; font-size:18px; letter-spacing:0.2px}
+    .grid{display:grid; grid-template-columns:1.1fr 1fr; gap:16px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px}
+    .card h3{margin:0 0 10px; font-size:16px}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    .row3{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
+    .field{display:flex; flex-direction:column; gap:6px;}
+    .field label{font-size:12px; color:var(--muted)}
+    .field input{background:#0e1116; border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:12px; outline:none}
+    .kpi{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+    .kpi .item{background:#0e1116; border:1px solid var(--border); border-radius:12px; padding:12px}
+    .kpi .item .t{font-size:12px; color:var(--muted)}
+    .kpi .item .v{font-size:20px; font-weight:700; margin-top:4px}
+    .muted{color:var(--muted)}
+    .hl{color:var(--accent)}
+    .good{color:var(--good)}
+    .bad{color:var(--bad)}
+    .divider{height:1px; background:var(--border); margin:12px 0}
+    button{background:#0e1116; color:var(--text); border:1px solid var(--border); padding:8px 12px; border-radius:10px; cursor:pointer}
+    button:hover{border-color:#2e3746}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">Looping Calculator</div>
+      <div class="lang">
+        <button id="langBtn" title="Switch language">RU 🇷🇺</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h3 data-i="inputs">Вводные параметры</h3>
+        <div class="row">
+          <div class="field"><label data-i="equity">Собственный капитал ($)</label><input id="equity" type="number" min="1" value="10000"></div>
+          <div class="field"><label data-i="lev">Плечо (×)</label><input id="leverage" type="number" min="1" step="0.1" value="7"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label data-i="dep">Ставка депозита (% годовых)</label><input id="depRate" type="number" step="0.01" value="6"></div>
+          <div class="field"><label data-i="loan">Ставка займа (% годовых)</label><input id="loanRate" type="number" step="0.01" value="4"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label data-i="maxLtv">Макс. LTV (%)</label><input id="maxLtv" type="number" step="0.1" value="88"></div>
+          <div class="field"><label data-i="liqThr">Liquidation threshold (%)</label><input id="liqThr" type="number" step="0.1" value="90"></div>
+        </div>
+        <div class="row3">
+          <div class="field"><label data-i="impact">Price impact при входе (% от позиции)</label><input id="impact" type="number" step="0.01" value="0.05"></div>
+          <div class="field"><label data-i="flashFee">Flash‑loan fee (% от позиции)</label><input id="flashFee" type="number" step="0.01" value="0"></div>
+        </div>
+        <div class="divider"></div>
+        <button id="calcBtn" data-i="recalc">Рассчитать</button>
+      </section>
+
+      <section class="card">
+        <h3 data-i="summary">Итоги позиции</h3>
+        <div class="kpi">
+          <div class="item"><div class="t" data-i="pos">Размер позиции</div><div class="v" id="kPos">—</div></div>
+          <div class="item"><div class="t" data-i="loanAmt">Займ</div><div class="v" id="kLoan">—</div></div>
+          <div class="item"><div class="t" data-i="ltv">LTV</div><div class="v" id="kLtv">—</div></div>
+        </div>
+        <div class="kpi" style="margin-top:10px">
+          <div class="item"><div class="t" data-i="netApy">Чистая доходность на equity</div><div class="v" id="kRoi">—</div></div>
+          <div class="item"><div class="t" data-i="netYear">Чистая прибыль в год</div><div class="v" id="kNet">—</div></div>
+          <div class="item"><div class="t" data-i="breakeven">Выход в ноль</div><div class="v" id="kBE">—</div></div>
+        </div>
+        <div class="kpi" style="margin-top:10px; grid-template-columns:repeat(2,1fr)">
+          <div class="item"><div class="t" data-i="hf">HF</div><div class="v" id="kHF">—</div></div>
+          <div class="item"><div class="t" data-i="ddToLiq">Просадка цены Collateral до ликвидации (в %)</div><div class="v" id="kDD">—</div></div>
+        </div>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+          <div class="field"><span class="t muted" data-i="entryCost">Потеря за вход в позицию</span><div class="v" id="kEntry">—</div></div>
+          <div class="field"><span class="t muted" data-i="spread">Потеря за выход из позиции</span><div class="v" id="kSpread">—</div></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const $ = (id)=>document.getElementById(id);
+  const t = (n)=>document.querySelectorAll(`[data-i="${n}"]`);
+
+  const i18n = {
+    ru: {
+      inputs:"Вводные параметры", equity:"Собственный капитал ($)", lev:"Плечо (×)", dep:"Ставка депозита (% годовых)", loan:"Ставка займа (% годовых)", impact:"Price impact при входе (% от позиции)", flashFee:"Flash‑loan fee (% от позиции)", maxLtv:"Макс. LTV (%)", liqThr:"Liquidation threshold (%)", recalc:"Рассчитать", summary:"Итоги позиции", pos:"Размер позиции", loanAmt:"Займ", ltv:"LTV", netApy:"Чистая доходность на equity", netYear:"Чистая прибыль в год", breakeven:"Выход в ноль", hf:"HF", ddToLiq:"Просадка цены Collateral до ликвидации (в %)", entryCost:"Потеря за вход в позицию", spread:"Потеря за выход из позиции"
+    },
+    en: {
+      inputs:"Inputs", equity:"Own capital ($)", lev:"Leverage (×)", dep:"Deposit APY (%)", loan:"Borrow APY (%)", impact:"Price impact on entry (% of position)", flashFee:"Flash‑loan fee (% of position)", maxLtv:"Max LTV (%)", liqThr:"Liquidation threshold (%)", recalc:"Calculate", summary:"Position summary", pos:"Position size", loanAmt:"Debt", ltv:"LTV", netApy:"Net return on equity", netYear:"Net income / year", breakeven:"Break even", hf:"HF", ddToLiq:"Collateral price drop to liquidation (%)", entryCost:"Entry loss", spread:"Exit loss"
+    }
+  };
+  let lang='ru';
+
+  function setLang(l){
+    lang=l; const d=i18n[l];
+    for(const k in d){ t(k).forEach(el=>el.textContent=d[k]); }
+    $("langBtn").textContent = l==='ru' ? 'RU 🇷🇺' : 'EN 🇬🇧';
+  }
+
+  function num(v){ return Math.max(0, Number(v)||0); }
+  function fmt(n){ return n.toLocaleString(undefined,{maximumFractionDigits:0}); }
+  function fmt2(n){ return n.toLocaleString(undefined,{maximumFractionDigits:2}); }
+
+  function computeModel({equity,lev,dep,loan,impact,flash,maxLtv,liqThr}){
+    const pos = equity * lev;
+    const debt = pos - equity;
+
+    const entryPct = impact + flash;
+    const entryCost = pos * entryPct;
+    const exitCost  = pos * impact; // flash‑fee не учитываем на выходе
+
+    // доходы/расходы (без реинвеста)
+    const gross = pos * dep;
+    const cost  = debt * loan;
+    const net   = gross - cost;
+
+    const roi = equity>0 ? net/equity : 0;
+    const ltv = pos>0 ? (debt/pos) : 0;
+
+    const hf = (debt>0 && liqThr>0) ? (pos * liqThr) / debt : Infinity;
+    let dd = (pos>0 && liqThr>0) ? (1 - (debt/(pos*liqThr))) : 0; // доля падения цены до ликвидации
+    dd = Math.max(0, Math.min(1, dd));
+
+    const dailyNet = net/365;
+    const totalCost = entryCost + exitCost; // считаем вход+выход
+    const daysToBE = dailyNet>0 ? Math.ceil(totalCost / dailyNet) : Infinity;
+
+    return {pos,debt,ltv,net,roi,entryCost,exitCost,hf,dd,daysToBE};
+  }
+
+  function calc(){
+    const equity = num($("equity").value);
+    const lev    = Math.max(1, Number($("leverage").value)||1);
+    const dep    = num($("depRate").value)/100;
+    const loan   = num($("loanRate").value)/100;
+    const impact = num($("impact").value)/100;
+    const flash  = num($("flashFee").value)/100;
+    const maxLtv = Math.min(1, num($("maxLtv").value)/100 || 0);
+    const liqThr = Math.min(1, num($("liqThr").value)/100 || 0);
+
+    const r = computeModel({equity,lev,dep,loan,impact,flash,maxLtv,liqThr});
+
+    $("kPos").textContent   = "$"+fmt(r.pos);
+    $("kLoan").textContent  = "$"+fmt(r.debt);
+    $("kLtv").textContent   = fmt2(r.ltv*100)+"%";
+    $("kRoi").textContent   = fmt2(r.roi*100)+"%";
+    $("kNet").textContent   = "$"+fmt(r.net);
+    $("kEntry").textContent = "$"+fmt(r.entryCost)+" ("+fmt2((impact+flash)*100)+"%)";
+    $("kSpread").textContent= "$"+fmt(r.exitCost)+" ("+fmt2(impact*100)+"%)";
+    $("kHF").textContent    = (r.hf===Infinity? (lang==='ru'?"∞":"∞"): fmt2(r.hf));
+    $("kDD").textContent    = fmt2(r.dd*100)+"%";
+    $("kBE").textContent    = (r.daysToBE===Infinity? (lang==='ru'?"никогда":"never"): r.daysToBE+ (lang==='ru'?" дней":" days"));
+
+    // цветовые состояния
+    const vRoi = $("kRoi"), vNet=$("kNet"), vHF=$("kHF"), vLTV=$("kLtv");
+    [vRoi,vNet,vHF,vLTV].forEach(el=>{ el.classList.remove('good','bad'); });
+    if (r.roi>0) vRoi.classList.add('good'); else if (r.roi<0) vRoi.classList.add('bad');
+    if (r.net>0) vNet.classList.add('good'); else if (r.net<0) vNet.classList.add('bad');
+    if (r.hf>=1.5 && r.hf!==Infinity) vHF.classList.add('good');
+    if (r.ltv>liqThr && liqThr>0) vLTV.classList.add('bad');
+  }
+
+  $("calcBtn").addEventListener('click', calc);
+  $("langBtn").addEventListener('click', ()=>{ setLang(lang==='ru'?'en':'ru'); });
+
+  setLang('ru');
+  calc();
+})();
+</script>
+</body>
+</html>
